@@ -1,0 +1,99 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>日程 · 轻量管理器</title>
+  <style>
+    :root { --ink:#172033; --muted:#718096; --line:#e9edf3; --card:#fff; --blue:#4567f2; --purple:#8b5cf6; --bg:#f6f8fc; --danger:#f06464; }
+    * { box-sizing:border-box; }
+    body { margin:0; min-width:320px; background:var(--bg); color:var(--ink); font-family:"Microsoft YaHei","PingFang SC",system-ui,sans-serif; }
+    button,input,select { font:inherit; }
+    button { border:0; cursor:pointer; }
+    .app { max-width:1240px; margin:0 auto; padding:28px 24px 40px; }
+    header { display:flex; justify-content:space-between; align-items:center; margin-bottom:28px; }
+    .brand { display:flex; gap:12px; align-items:center; }
+    .brand-mark { width:42px; height:42px; display:grid; place-items:center; color:#fff; border-radius:14px; font-size:21px; background:linear-gradient(135deg,var(--purple),var(--blue)); box-shadow:0 7px 18px #506cf240; }
+    h1 { margin:0; font-size:21px; letter-spacing:-.5px; } .sub { margin:3px 0 0; color:var(--muted); font-size:13px; }
+    .today-button, .nav button { background:#fff; color:#3a4761; border:1px solid var(--line); border-radius:9px; padding:9px 13px; transition:.2s; }
+    .today-button:hover,.nav button:hover { border-color:#b7c4ff; color:var(--blue); }
+    .dashboard { display:grid; grid-template-columns:minmax(0,1.58fr) minmax(290px,.72fr); gap:22px; }
+    .calendar, .side-card { background:var(--card); border:1px solid var(--line); border-radius:18px; box-shadow:0 5px 24px #25325c08; }
+    .calendar { padding:25px; }
+    .calendar-top { display:flex; align-items:center; justify-content:space-between; margin-bottom:22px; }
+    #monthTitle { margin:0; font-size:20px; }
+    .nav { display:flex; gap:7px; }.nav button { padding:6px 10px; font-size:18px; line-height:18px; }
+    .weekdays,.days { display:grid; grid-template-columns:repeat(7,1fr); }.weekdays { margin-bottom:7px; }
+    .weekdays span { text-align:center; color:#98a3b7; font-size:12px; padding:5px 0; }
+    .day { min-height:88px; padding:8px; position:relative; background:transparent; text-align:left; border:1px solid transparent; border-radius:12px; transition:.18s; }
+    .day:hover { background:#f6f8ff; }.day.empty { pointer-events:none; }
+    .day.selected { background:#eff2ff; border-color:#cdd6ff; }.day.today .number { background:var(--blue); color:#fff; }
+    .number { display:grid; place-items:center; width:27px; height:27px; border-radius:50%; font-size:13px; }
+    .event-list { display:grid; gap:3px; margin-top:6px; }
+    .event-label { display:block; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; max-width:100%; padding:3px 6px; border-radius:5px; font-size:11px; color:#5c46b4; background:#f0edff; }
+    .event-more { color:#7d8799; font-size:11px; padding-left:4px; }
+    .side { display:flex; flex-direction:column; gap:18px; }.side-card { padding:21px; }
+    .date-head { display:flex; justify-content:space-between; align-items:start; padding-bottom:16px; border-bottom:1px solid var(--line); }
+    #selectedTitle { margin:0 0 5px; font-size:17px; }.date-head p { margin:0; color:var(--muted); font-size:13px; }
+    .count { border-radius:20px; padding:5px 9px; font-size:12px; color:var(--blue); background:#eef1ff; }
+    #scheduleList { padding:4px 0; min-height:118px; }.empty-state { text-align:center; color:#9aa5b6; font-size:13px; padding:34px 4px 16px; }
+    .event { display:flex; align-items:center; gap:10px; padding:13px 0; border-bottom:1px solid #f1f3f7; }.event:last-child { border:0; }
+    .event-color { width:8px; height:37px; border-radius:8px; background:var(--blue); }.event-main { min-width:0; flex:1; }.event-name { font-size:14px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }.event-time { color:#8894a7; font-size:12px; margin-top:4px; }
+    .delete { width:27px; height:27px; border-radius:7px; color:#a0a9b8; background:transparent; font-size:18px; }.delete:hover { color:var(--danger); background:#fff0f0; }
+    .form-title { font-size:15px; font-weight:700; margin:0 0 14px; }.form-grid { display:grid; gap:11px; }.field { display:grid; gap:5px; color:#778398; font-size:12px; }.field input { width:100%; padding:10px; outline:none; border:1px solid var(--line); border-radius:8px; color:var(--ink); background:#fbfcfe; }.field input:focus { border-color:#9aabff; box-shadow:0 0 0 3px #e9edff; }
+    .inline { display:grid; grid-template-columns:1fr 1fr; gap:10px; }.add { width:100%; margin-top:15px; padding:11px; color:white; font-weight:600; background:linear-gradient(110deg,var(--blue),#6578f6); border-radius:9px; box-shadow:0 6px 14px #5971e83d; }.add:hover { filter:brightness(1.05); }
+    @media (max-width:800px) { .dashboard { grid-template-columns:1fr; }.day { min-height:64px; padding:5px; }.event-label { display:none; }.event-list { height:6px; width:6px; margin:7px 3px; border-radius:50%; background:var(--blue); box-shadow:9px 0 0 var(--purple),18px 0 0 #f5a524; }.event-more { display:none; }.calendar { padding:17px 12px; } .app { padding:18px 13px; } }
+    @media (max-width:430px) { header .sub { display:none; }.day { min-height:52px; }.calendar-top { margin-bottom:12px; } }
+  </style>
+</head>
+<body>
+  <main class="app">
+    <header>
+      <div class="brand"><div class="brand-mark">✓</div><div><h1>我的日程</h1><p class="sub">把时间留给重要的事</p></div></div>
+      <button class="today-button" id="todayBtn">回到今天</button>
+    </header>
+    <section class="dashboard">
+      <section class="calendar" aria-label="日历"><div class="calendar-top"><h2 id="monthTitle"></h2><div class="nav"><button id="prevBtn" aria-label="上个月">‹</button><button id="nextBtn" aria-label="下个月">›</button></div></div><div class="weekdays"><span>日</span><span>一</span><span>二</span><span>三</span><span>四</span><span>五</span><span>六</span></div><div class="days" id="calendarDays"></div></section>
+      <aside class="side">
+        <section class="side-card"><div class="date-head"><div><h2 id="selectedTitle"></h2><p id="selectedDesc"></p></div><span class="count" id="eventCount">0 项日程</span></div><div id="scheduleList"></div></section>
+        <section class="side-card"><h3 class="form-title">添加日程</h3><form id="scheduleForm" class="form-grid"><label class="field">日程名称<input id="eventName" maxlength="35" required placeholder="例如：项目例会" /></label><div class="inline"><label class="field">日期<input id="eventDate" type="date" required /></label><label class="field">时间<input id="eventTime" type="time" value="09:00" required /></label></div><button class="add" type="submit">添加到日程</button></form></section>
+      </aside>
+    </section>
+  </main>
+  <script>
+    const $ = s => document.querySelector(s);
+    const storeKey = 'simple-schedule-events';
+    const today = new Date(); today.setHours(0,0,0,0);
+    let selected = new Date(today), view = new Date(today.getFullYear(), today.getMonth(), 1);
+    let events = JSON.parse(localStorage.getItem(storeKey) || 'null') || [
+      {id:'demo-1', title:'团队周会', date:formatDate(today), time:'10:00'},
+      {id:'demo-2', title:'整理本周计划', date:formatDate(new Date(today.getFullYear(),today.getMonth(),today.getDate()+2)), time:'15:30'}
+    ];
+    function formatDate(d) { const o = new Date(d.getTime()-d.getTimezoneOffset()*60000); return o.toISOString().slice(0,10); }
+    function isSame(a,b) { return formatDate(a) === formatDate(b); }
+    function save() { localStorage.setItem(storeKey, JSON.stringify(events)); }
+    function render() {
+      $('#monthTitle').textContent = view.toLocaleDateString('zh-CN',{year:'numeric',month:'long'});
+      const first = new Date(view.getFullYear(),view.getMonth(),1), days = new Date(view.getFullYear(),view.getMonth()+1,0).getDate();
+      let html = ''; for(let i=0;i<first.getDay();i++) html += '<div class="day empty"></div>';
+      for(let n=1;n<=days;n++) { const date = new Date(view.getFullYear(),view.getMonth(),n), key = formatDate(date), items = events.filter(e=>e.date===key).sort((a,b)=>a.time.localeCompare(b.time)), shown = items.slice(0,2); const preview = items.length ? `<span class="event-list">${shown.map(e=>`<span class="event-label">${escapeHtml(e.time)} ${escapeHtml(e.title)}</span>`).join('')}${items.length>2?`<span class="event-more">+${items.length-2} 项</span>`:''}</span>` : ''; html += `<button class="day ${isSame(date,selected)?'selected':''} ${isSame(date,today)?'today':''}" data-date="${key}"><span class="number">${n}</span>${preview}</button>`; }
+      $('#calendarDays').innerHTML = html; renderList();
+    }
+    function renderList() { const key = formatDate(selected), items = events.filter(e=>e.date===key).sort((a,b)=>a.time.localeCompare(b.time));
+      $('#selectedTitle').textContent = selected.toLocaleDateString('zh-CN',{month:'long',day:'numeric',weekday:'long'});
+      $('#selectedDesc').textContent = isSame(selected,today) ? '今天，安排从容开始' : selected.toLocaleDateString('zh-CN',{year:'numeric',month:'long',day:'numeric'});
+      $('#eventCount').textContent = `${items.length} 项日程`;
+      $('#scheduleList').innerHTML = items.length ? items.map((e,i)=>`<div class="event"><span class="event-color" style="background:${['#4567f2','#8b5cf6','#e9914b'][i%3]}"></span><div class="event-main"><div class="event-name">${escapeHtml(e.title)}</div><div class="event-time">${e.time}</div></div><button class="delete" data-id="${e.id}" title="删除日程">×</button></div>`).join('') : '<div class="empty-state">这一天还没有安排<br>给自己留一点空白吧</div>';
+      $('#eventDate').value = key;
+    }
+    function escapeHtml(v) { const d=document.createElement('div'); d.textContent=v; return d.innerHTML; }
+    $('#calendarDays').addEventListener('click', e => { const b=e.target.closest('[data-date]'); if(!b)return; selected=new Date(b.dataset.date+'T00:00:00'); view=new Date(selected.getFullYear(),selected.getMonth(),1); render(); });
+    $('#scheduleList').addEventListener('click', e => { const b=e.target.closest('.delete'); if(!b)return; events=events.filter(x=>x.id!==b.dataset.id); save(); render(); });
+    $('#prevBtn').onclick=()=>{view.setMonth(view.getMonth()-1);render()}; $('#nextBtn').onclick=()=>{view.setMonth(view.getMonth()+1);render()};
+    $('#todayBtn').onclick=()=>{selected=new Date(today);view=new Date(today.getFullYear(),today.getMonth(),1);render()};
+    $('#eventDate').addEventListener('change', e=>{ if(e.target.value){selected=new Date(e.target.value+'T00:00:00');view=new Date(selected.getFullYear(),selected.getMonth(),1);render();} });
+    $('#scheduleForm').addEventListener('submit', e=>{ e.preventDefault(); const title=$('#eventName').value.trim(), date=$('#eventDate').value, time=$('#eventTime').value; if(!title||!date)return; events.push({id:Date.now().toString(),title,date,time}); save(); selected=new Date(date+'T00:00:00');view=new Date(selected.getFullYear(),selected.getMonth(),1);$('#eventName').value='';render(); });
+    render();
+  </script>
+</body>
+</html>
