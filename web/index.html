@@ -1,0 +1,350 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>我的日程</title>
+  <link rel="icon" href="/assets/icon-32.png" />
+  <link rel="apple-touch-icon" href="/assets/icon-192.png" />
+  <link rel="manifest" href="/manifest.webmanifest" />
+  <meta name="theme-color" content="#4567f2" />
+  <link rel="stylesheet" href="/css/style.css" />
+</head>
+<body>
+  <main class="app">
+    <header>
+      <div class="brand">
+        <div class="brand-mark">✓</div>
+        <div>
+          <h1>我的日程</h1>
+          <p class="sub" id="headerSub">把时间留给重要的事</p>
+        </div>
+      </div>
+      <div class="header-actions">
+        <nav class="tabs" id="tabs">
+          <button class="tab is-active" data-view="calendar" type="button">日历</button>
+          <button class="tab" data-view="stats" type="button">月度总结</button>
+          <button class="tab" data-view="settings" type="button">设置</button>
+        </nav>
+        <button class="today-button" id="todayBtn" type="button">回到今天</button>
+      </div>
+    </header>
+
+    <!-- 开机播报 / 到点提醒 -->
+    <section class="banner" id="banner" hidden>
+      <div class="banner-mark">🔔</div>
+      <div class="banner-body">
+        <strong id="bannerTitle"></strong>
+        <ul class="banner-list" id="bannerList"></ul>
+      </div>
+      <button class="banner-close" id="bannerClose" type="button" aria-label="关闭提醒">×</button>
+    </section>
+
+    <!-- ============================ 日历 ============================ -->
+    <section class="view dashboard" id="view-calendar">
+      <section class="calendar" aria-label="日历">
+        <div class="calendar-top">
+          <h2 id="monthTitle"></h2>
+          <div class="nav">
+            <button id="prevBtn" type="button" aria-label="上个月">‹</button>
+            <button id="nextBtn" type="button" aria-label="下个月">›</button>
+          </div>
+        </div>
+        <div class="weekdays">
+          <span>日</span><span>一</span><span>二</span><span>三</span><span>四</span><span>五</span><span>六</span>
+        </div>
+        <div class="days" id="calendarDays"></div>
+      </section>
+
+      <aside class="side">
+        <section class="side-card">
+          <div class="date-head">
+            <div>
+              <h2 id="selectedTitle"></h2>
+              <p id="selectedDesc"></p>
+            </div>
+            <span class="count" id="eventCount">0 项日程</span>
+          </div>
+          <div id="scheduleList"></div>
+        </section>
+
+        <section class="side-card">
+          <div class="form-head">
+            <h3 class="form-title" id="formTitle">添加日程</h3>
+            <button class="link-button" id="cancelEdit" type="button" hidden>取消编辑</button>
+          </div>
+          <form id="scheduleForm" class="form-grid" autocomplete="off">
+            <label class="field">日程名称
+              <input id="eventName" maxlength="35" required placeholder="例如：项目例会" />
+            </label>
+            <div class="inline">
+              <label class="field">日期
+                <input id="eventDate" type="date" required />
+              </label>
+              <label class="field">时间
+                <input id="eventTime" type="time" value="09:00" required />
+              </label>
+            </div>
+            <div class="inline">
+              <label class="field">分类
+                <select id="eventCategory"></select>
+              </label>
+              <label class="field">重复
+                <select id="eventRepeat"></select>
+              </label>
+            </div>
+            <div class="inline">
+              <label class="field">提醒
+                <select id="eventRemind"></select>
+              </label>
+              <label class="field">备注
+                <input id="eventNote" maxlength="60" placeholder="可选" />
+              </label>
+            </div>
+            <button class="add" type="submit" id="submitBtn">添加到日程</button>
+          </form>
+        </section>
+
+        <section class="side-card mini-card">
+          <div class="mini-head">
+            <span>本月概览</span>
+            <button class="link-button" data-goto="stats" type="button">查看总结 ›</button>
+          </div>
+          <div class="mini-grid">
+            <div><b id="miniTotal">0</b><span>安排</span></div>
+            <div><b id="miniDone">0</b><span>完成</span></div>
+            <div><b id="miniRate">0%</b><span>完成率</span></div>
+          </div>
+          <div class="progress"><i id="miniProgress" style="width:0%"></i></div>
+        </section>
+
+        <section class="side-card holiday-card">
+          <div class="mini-head">
+            <span>节假日</span>
+            <button class="link-button" id="holidayInfoBtn" type="button">数据说明 ›</button>
+          </div>
+          <div class="holiday-today" id="holidayToday"></div>
+          <div class="holiday-sub">接下来</div>
+          <ul class="holiday-list" id="holidayUpcoming"></ul>
+        </section>
+      </aside>
+    </section>
+
+    <!-- ========================== 月度总结 ========================== -->
+    <section class="view" id="view-stats" hidden>
+      <div class="section-head">
+        <div>
+          <h2 id="statsTitle">月度总结</h2>
+          <p class="sub" id="statsSub">用图表回看这一个月的节奏</p>
+        </div>
+        <div class="nav">
+          <button id="statsPrev" type="button" aria-label="上个月">‹</button>
+          <button id="statsNext" type="button" aria-label="下个月">›</button>
+        </div>
+      </div>
+
+      <div class="stat-grid" id="statGrid">
+        <div class="stat-tile">
+          <span class="stat-label">日程总数</span>
+          <div class="stat-value"><b id="statTotal">0</b><em>项</em></div>
+          <span class="stat-hint" id="statTotalHint">日均 0 项</span>
+        </div>
+        <div class="stat-tile">
+          <span class="stat-label">已完成</span>
+          <div class="stat-value"><b id="statDone">0</b><em>项</em></div>
+          <span class="stat-hint" id="statDoneHint">坚持就有收获</span>
+        </div>
+        <div class="stat-tile accent">
+          <span class="stat-label">完成率</span>
+          <div class="stat-value"><b id="statRate">0</b><em>%</em></div>
+          <span class="stat-hint" id="statRateHint">本月执行情况</span>
+        </div>
+        <div class="stat-tile">
+          <span class="stat-label">最忙的一天</span>
+          <div class="stat-value"><b id="statBusiest">-</b><em id="statBusiestUnit"></em></div>
+          <span class="stat-hint" id="statBusiestHint">还没有记录</span>
+        </div>
+      </div>
+
+      <div class="chart-grid">
+        <div class="chart-card span-2">
+          <div class="chart-head">
+            <h3>每日安排</h3>
+            <span class="chart-note">柱高为当日日程数，深色为已完成</span>
+          </div>
+          <div class="chart-body tall" id="chartDaily"></div>
+        </div>
+        <div class="chart-card">
+          <div class="chart-head">
+            <h3>分类占比</h3>
+            <span class="chart-note">按日程数量</span>
+          </div>
+          <div class="chart-body" id="chartCategory"></div>
+        </div>
+        <div class="chart-card">
+          <div class="chart-head">
+            <h3>完成趋势</h3>
+            <span class="chart-note">累计计划 vs 实际完成</span>
+          </div>
+          <div class="chart-body" id="chartTrend"></div>
+        </div>
+        <div class="chart-card">
+          <div class="chart-head">
+            <h3>时段分布</h3>
+            <span class="chart-note">你更习惯把事安排在什么时候</span>
+          </div>
+          <div class="chart-body" id="chartPeriod"></div>
+        </div>
+        <div class="chart-card">
+          <div class="chart-head">
+            <h3>一周节奏</h3>
+            <span class="chart-note">按星期统计日程数量</span>
+          </div>
+          <div class="chart-body" id="chartWeekday"></div>
+        </div>
+        <div class="summary-card span-2">
+          <h3>本月小结</h3>
+          <p id="summaryText">本月还没有数据。</p>
+          <div class="summary-meta">
+            <span id="summaryActive">活跃 0 天</span>
+            <span id="summaryRepeat">重复日程 0 项</span>
+            <span id="summaryCompare">与上月对比 —</span>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============================ 设置 ============================ -->
+    <section class="view" id="view-settings" hidden>
+      <div class="section-head">
+        <div>
+          <h2>设置</h2>
+          <p class="sub">让提醒贴合你的生活节奏</p>
+        </div>
+      </div>
+
+      <div class="settings-grid">
+        <section class="settings-card">
+          <h3>开机与提醒</h3>
+
+          <div class="setting-row">
+            <div class="setting-text">
+              <b>开机自动启动</b>
+              <span>登录 Windows 后自动运行「我的日程」</span>
+            </div>
+            <button class="switch" id="switchAutostart" type="button" role="switch" aria-checked="false"></button>
+          </div>
+
+          <div class="setting-row">
+            <div class="setting-text">
+              <b>开机时提醒今日待办</b>
+              <span>每次开机弹出系统通知，列出今天的安排</span>
+            </div>
+            <button class="switch" id="switchBootNotify" type="button" role="switch" aria-checked="false"></button>
+          </div>
+
+          <div class="setting-row">
+            <div class="setting-text">
+              <b>开机时打开窗口</b>
+              <span>关闭后开机只弹通知，不自动打开界面</span>
+            </div>
+            <button class="switch" id="switchBootWindow" type="button" role="switch" aria-checked="false"></button>
+          </div>
+
+          <div class="setting-row">
+            <div class="setting-text">
+              <b>每日待办推送</b>
+              <span>每天固定时间提醒当天的安排</span>
+            </div>
+            <button class="switch" id="switchDigest" type="button" role="switch" aria-checked="false"></button>
+          </div>
+
+          <div class="setting-row">
+            <div class="setting-text">
+              <b>推送时间</b>
+              <span>每日待办通知的发送时间</span>
+            </div>
+            <input class="input-inline" id="digestTime" type="time" value="08:30" />
+          </div>
+
+          <div class="setting-row">
+            <div class="setting-text">
+              <b>默认提前提醒</b>
+              <span>新增日程时默认提前多久提醒</span>
+            </div>
+            <select class="input-inline" id="defaultRemind"></select>
+          </div>
+
+          <div class="setting-row">
+            <div class="setting-text">
+              <b>月初推送月度总结</b>
+              <span>每月初用通知回顾上个月的完成情况</span>
+            </div>
+            <button class="switch" id="switchSummary" type="button" role="switch" aria-checked="false"></button>
+          </div>
+
+          <div class="setting-row">
+            <div class="setting-text">
+              <b>节假日当天提醒</b>
+              <span>放假日、节日当天推送通知，调休上班日也会提示</span>
+            </div>
+            <button class="switch" id="switchHoliday" type="button" role="switch" aria-checked="false"></button>
+          </div>
+        </section>
+
+        <section class="settings-card">
+          <h3>应用与数据</h3>
+
+          <div class="setting-row">
+            <div class="setting-text">
+              <b>创建桌面快捷方式</b>
+              <span>图标使用 app.png 制作的 app.ico</span>
+            </div>
+            <button class="pill-button" id="createShortcut" type="button">创建</button>
+          </div>
+
+          <div class="setting-row">
+            <div class="setting-text">
+              <b>测试系统通知</b>
+              <span>确认 Windows 通知是否正常弹出</span>
+            </div>
+            <button class="pill-button" id="testNotify" type="button">测试</button>
+          </div>
+
+          <div class="setting-row">
+            <div class="setting-text">
+              <b>立即播报今日待办</b>
+              <span>马上弹出一条今天的安排通知</span>
+            </div>
+            <button class="pill-button" id="digestNow" type="button">播报</button>
+          </div>
+
+          <div class="setting-row">
+            <div class="setting-text">
+              <b>数据位置</b>
+              <span id="dataDir">-</span>
+            </div>
+            <button class="pill-button" id="openDataDir" type="button">打开</button>
+          </div>
+
+          <div class="setting-row">
+            <div class="setting-text">
+              <b>退出应用</b>
+              <span>退出后将不再接收日程提醒</span>
+            </div>
+            <button class="pill-button danger" id="quitApp" type="button">退出</button>
+          </div>
+
+          <p class="version-line" id="versionLine">我的日程 v1.1.0</p>
+        </section>
+      </div>
+    </section>
+  </main>
+
+  <div class="toast-stack" id="toastStack"></div>
+  <div class="chart-tip" id="chartTip" hidden></div>
+
+  <script src="/js/charts.js"></script>
+  <script src="/js/app.js"></script>
+</body>
+</html>
